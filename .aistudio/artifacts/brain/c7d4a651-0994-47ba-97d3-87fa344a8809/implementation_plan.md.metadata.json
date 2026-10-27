@@ -1,0 +1,6 @@
+{
+  "summary":  "Plan de conception et d'implémentation pour le projet heltec-triangulation-python : application autonome Windows avec backend Python standard, calcul de triangulation WGS84, gestion des incertitudes, API Heltec et interface Leaflet avec repli hors-ligne.",
+  "updatedAt":  "2026-10-27T09:17:32.338923481Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

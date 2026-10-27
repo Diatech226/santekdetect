@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Triangulation Heltec V4.3 · HackRF</title>
+  
+  <!-- Feuille de style principale -->
+  <link rel="stylesheet" href="/style.css">
+  
+  <!-- Leaflet CSS avec repli automatique si déconnecté -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Barre supérieure compacte -->
+    <header class="top-bar">
+      <div class="brand-zone">
+        <span class="brand-title">Heltec Triangulation</span>
+        <span class="brand-sub">WGS84 · 2 Balises GPS</span>
+      </div>
+
+      <div class="header-status-zone">
+        <span id="system-status-indicator" class="status-badge status-waiting">En attente</span>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-example" class="btn btn-secondary" title="Charger des coordonnées d'essai">Exemple</button>
+        <button id="btn-compute" class="btn btn-primary" title="Forcer le calcul">Calculer</button>
+        <button id="btn-reset" class="btn btn-subtle" title="Remettre à zéro">Réinitialiser</button>
+      </div>
+    </header>
+
+    <!-- Corps principal : 2 colonnes (Contrôles à gauche, Carte à droite) -->
+    <main class="main-content">
+      <!-- Colonne latérale de contrôle -->
+      <aside class="sidebar-panel">
+        
+        <!-- Formulaire Station A -->
+        <section class="station-card station-a">
+          <div class="station-header">
+            <h2 class="station-title">Station A</h2>
+            <span class="station-role">Balise 1</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="input-group">
+              <label for="lat-a">Latitude</label>
+              <input type="number" id="lat-a" step="0.0001" value="48.8500" required>
+            </div>
+            <div class="input-group">
+              <label for="lon-a">Longitude</label>
+              <input type="number" id="lon-a" step="0.0001" value="2.3000" required>
+            </div>
+          </div>
+
+          <div class="azimuth-control">
+            <div class="slider-header">
+              <label for="range-azimuth-a">Azimut visé</label>
+              <div class="numeric-badge">
+                <input type="number" id="num-azimuth-a" min="0" max="359" value="45" class="num-input">
+                <span class="unit">°</span>
+              </div>
+            </div>
+            <input type="range" id="range-azimuth-a" min="0" max="359" value="45" class="azimuth-slider">
+            <div class="compass-ticks">
+              <span>N 0°</span>
+              <span>E 90°</span>
+              <span>S 180°</span>
+              <span>O 270°</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="input-group">
+              <label for="tol-a">Tolérance angulaire (±)</label>
+              <div class="unit-input">
+                <input type="number" id="tol-a" min="1" max="45" step="0.5" value="5.0">
+                <span class="unit">°</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Formulaire Station B -->
+        <section class="station-card station-b">
+          <div class="station-header">
+            <h2 class="station-title">Station B</h2>
+            <span class="station-role">Balise 2</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="input-group">
+              <label for="lat-b">Latitude</label>
+              <input type="number" id="lat-b" step="0.0001" value="48.8500" required>
+            </div>
+            <div class="input-group">
+              <label for="lon-b">Longitude</label>
+              <input type="number" id="lon-b" step="0.0001" value="2.3500" required>
+            </div>
+          </div>
+
+          <div class="azimuth-control">
+            <div class="slider-header">
+              <label for="range-azimuth-b">Azimut visé</label>
+              <div class="numeric-badge">
+                <input type="number" id="num-azimuth-b" min="0" max="359" value="315" class="num-input">
+                <span class="unit">°</span>
+              </div>
+            </div>
+            <input type="range" id="range-azimuth-b" min="0" max="359" value="315" class="azimuth-slider">
+            <div class="compass-ticks">
+              <span>N 0°</span>
+              <span>E 90°</span>
+              <span>S 180°</span>
+              <span>O 270°</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="input-group">
+              <label for="tol-b">Tolérance angulaire (±)</label>
+              <div class="unit-input">
+                <input type="number" id="tol-b" min="1" max="45" step="0.5" value="5.0">
+                <span class="unit">°</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Paramètre de portée maximale -->
+        <div class="config-row">
+          <label for="max-range-km">Portée max d'analyse :</label>
+          <div class="unit-input">
+            <input type="number" id="max-range-km" min="1" max="100" value="20" class="num-input-small">
+            <span class="unit">km</span>
+          </div>
+        </div>
+
+        <!-- Panneau de résultat lisible -->
+        <section class="result-card">
+          <div class="result-header">
+            <h3 class="result-title">Position estimée (HackRF)</h3>
+            <span id="target-validity-badge" class="validity-indicator">En attente</span>
+          </div>
+
+          <div id="target-coords-display" class="coords-box">
+            <div class="coord-item">
+              <span class="coord-label">Latitude :</span>
+              <span id="target-lat-value" class="coord-val">—</span>
+            </div>
+            <div class="coord-item">
+              <span class="coord-label">Longitude :</span>
+              <span id="target-lon-value" class="coord-val">—</span>
+            </div>
+            <div class="coord-item">
+              <span class="coord-label">Incertitude :</span>
+              <span id="target-precision-value" class="coord-val">—</span>
+            </div>
+          </div>
+
+          <div id="status-message-box" class="status-description">
+            Sélectionnez ou modifiez un azimut pour déclencher le calcul immédiat.
+          </div>
+
+          <!-- Guidage retour pour les Heltec -->
+          <div class="guidance-section">
+            <div class="guidance-header">Messages de guidage préparés pour les Heltec</div>
+            <div class="guidance-grid">
+              <div class="guidance-box">
+                <div class="guidance-station-label">Vers Cible depuis A</div>
+                <div id="guidance-a-cap" class="guidance-val">Cap : —</div>
+                <div id="guidance-a-dist" class="guidance-sub">Distance : —</div>
+              </div>
+              <div class="guidance-box">
+                <div class="guidance-station-label">Vers Cible depuis B</div>
+                <div id="guidance-b-cap" class="guidance-val">Cap : —</div>
+                <div id="guidance-b-dist" class="guidance-sub">Distance : —</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </aside>
+
+      <!-- Zone Cartographique -->
+      <section class="map-container">
+        <!-- Conteneur Leaflet -->
+        <div id="map" class="map-view"></div>
+
+        <!-- Canevas de secours hors-ligne (activé si Leaflet/OSM ne charge pas) -->
+        <canvas id="offline-canvas" class="offline-canvas" style="display: none;"></canvas>
+
+        <!-- Légende flottante discrète -->
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-dot dot-a"></span> Station A</div>
+          <div class="legend-item"><span class="legend-dot dot-b"></span> Station B</div>
+          <div class="legend-item"><span class="legend-dot dot-target"></span> HackRF estimé</div>
+          <div class="legend-item"><span class="legend-box box-cone"></span> Zone d'incertitude</div>
+        </div>
+
+        <div id="offline-notice" class="offline-notice" style="display: none;">
+          Mode cartographique hors-ligne actif (grille métrique locale WGS84).
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Leaflet JS avec fallback local si pas d'accès Internet -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- Script client principal -->
+  <script src="/app.js"></script>
+</body>
+</html>
